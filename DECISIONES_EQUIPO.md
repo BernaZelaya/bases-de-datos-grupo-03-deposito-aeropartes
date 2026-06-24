@@ -56,7 +56,7 @@ que firman en papel (entonces el texto libre está bien).
 
 - [ ] **A.** Son usuarios del sistema → convertir `inspector`, `retirado_por` y `usuario` en **FK a `USUARIO`** (más normalizado, conecta la tabla huérfana).
 - [ ] **B.** Son personas físicas externas (firman en papel, pueden no tener cuenta) → **dejar texto libre**, y `USUARIO` se usa solo para login/consulta.
-- [ ] **C.** Mixto: el que registra en el sistema (`movimiento.usuario`) es FK a `USUARIO`; inspector y retirado_por quedan en texto (porque son del taller, no del sistema).
+- [x] **C.** Mixto: el que registra en el sistema (`movimiento.usuario`) es FK a `USUARIO`; inspector y retirado_por quedan en texto (porque son del taller, no del sistema).
 
 `Otra: _______________________________________________`
 
@@ -71,7 +71,7 @@ Hoy está modelada como `USUARIO 1 ── N CATALOGO_MATERIAL` (FK `id_usuario` 
 literalmente significa *“cada material lo cargó/consultó a lo sumo un usuario”*, que suena raro
 para el verbo “consultar”.
 
-- [ ] **A.** En realidad es **“registrado/cargado por”** → renombrar la relación a `registra` o `carga`. La cardinalidad 1:N actual queda bien.
+- [x] **A.** En realidad es **“registrado/cargado por”** → renombrar la relación a `registra` o `carga`. La cardinalidad 1:N actual queda bien.
 - [ ] **B.** Es **consulta real** (muchos usuarios consultan muchos materiales) → modelar **N:N con tabla intermedia** `usuario_consulta` (usuario, NNE, fecha).
 - [ ] **C.** “Consultar” no es un dato que el sistema deba guardar → **eliminar la relación**; `USUARIO` queda para login.
 
@@ -88,7 +88,7 @@ En la **tarjeta física** están escritos el Nº de parte y el Nº de serie. En 
 duplican**: el nº de serie sale del elemento (`inventario_fisico.n_serie`) y el nº de
 parte/referencia del catálogo (`NREF`/`NNE`). Duplicarlos invita a inconsistencias.
 
-- [ ] **A.** **Derivar** (como está ahora): no se duplican; se obtienen con un JOIN. Más normalizado.
+- [x] **A.** **Derivar** (como está ahora): no se duplican; se obtienen con un JOIN. Más normalizado.
 - [ ] **B.** **Duplicar** en `tarjeta` para que la fila sea “igual al papel”, aunque haya redundancia.
 
 `Otra: _______________________________________________`
@@ -104,7 +104,7 @@ parte/referencia del catálogo (`NREF`/`NNE`). Duplicarlos invita a inconsistenc
 Si registramos un movimiento de un elemento que está fuera del depósito (`id_ubicacion NULL`),
 la FK obligatoria nos obliga a poner una ubicación que no existe.
 
-- [ ] **A.** Hacer `id_ubicacion` **NULL-able** en `movimiento_inventario` (NULL = el movimiento ocurrió fuera del depósito).
+- [x] **A.** Hacer `id_ubicacion` **NULL-able** en `movimiento_inventario` (NULL = el movimiento ocurrió fuera del depósito).
 - [ ] **B.** Crear una ubicación especial **“EXTERIOR/EN TRÁNSITO”** y usarla cuando está afuera.
 - [ ] **C.** Dejarlo obligatorio: solo se registran movimientos dentro del depósito.
 
@@ -126,9 +126,9 @@ justificación del dominio.
 ### P5. Triggers - ¿cuáles implementamos? (marcar varios)
 > **Tema de la materia:** Triggers DML (AFTER / INSTEAD OF), tablas `INSERTED`/`DELETED`, ROLLBACK.
 
-- [ ] **T1 - Una sola tarjeta activa.** Al insertar una tarjeta nueva, desactivar (`activa=0`) la tarjeta activa anterior del mismo elemento. *(Mantiene el invariante del historial.)*
-- [ ] **T2 - Sincronizar “está afuera”.** Al **abrir** una salida (`fecha_retorno NULL`) poner `id_ubicacion=NULL` en el elemento; al **cerrarla**, dejar que el retorno reasigne la ubicación. *(Elimina el riesgo de que el elemento figure “adentro” con salida abierta.)*
-- [ ] **T3 - Baja automática.** Al insertar una salida con motivo `BAJA`, crear una tarjeta en estado `BAJA` (y desactivar la anterior). *(Sincroniza estado y salida en la baja.)*
+- [x] **T1 - Una sola tarjeta activa.** Al insertar una tarjeta nueva, desactivar (`activa=0`) la tarjeta activa anterior del mismo elemento. *(Mantiene el invariante del historial.)*
+- [x] **T2 - Sincronizar “está afuera”.** Al **abrir** una salida (`fecha_retorno NULL`) poner `id_ubicacion=NULL` en el elemento; al **cerrarla**, dejar que el retorno reasigne la ubicación. *(Elimina el riesgo de que el elemento figure “adentro” con salida abierta.)*
+- [x] **T3 - Baja automática.** Al insertar una salida con motivo `BAJA`, crear una tarjeta en estado `BAJA` (y desactivar la anterior). *(Sincroniza estado y salida en la baja.)*
 - [ ] **T4 - Auditoría automática.** Ante cambios en el elemento/salida, registrar una fila en `movimiento_inventario`. *(Bitácora sin depender de que la app la escriba.)*
 - [ ] **T5 - Transiciones de estado válidas.** Impedir transiciones imposibles (ej.: de `BAJA` volver a `EN_SERVICIO`). *(Integridad de transiciones.)*
 
@@ -144,9 +144,9 @@ justificación del dominio.
 ### P6. Procedimientos almacenados - ¿cuáles? (marcar varios)
 > **Tema de la materia:** Stored procedures, parámetros IN/OUT, control de flujo (IF), transacciones, validaciones (EXISTS).
 
-- [ ] **SP1 - `sp_RegistrarSalida`** (`@id_item, @id_motivo, @destino, @retirado_por, @fecha_prevista`). Valida que el elemento exista, que **no tenga ya una salida abierta** y que **no esté en BAJA**; inserta la salida dentro de una transacción.
-- [ ] **SP2 - `sp_RegistrarRetorno`** (`@id_salida, @id_ubicacion`). Valida que la salida esté abierta; setea `fecha_retorno`; reubica el elemento; registra el movimiento.
-- [ ] **SP3 - `sp_CambiarEstado`** (`@id_item, @codigo_estado, @ot, @causas, @inspector`). En una transacción: desactiva la tarjeta activa e inserta la nueva. *(Es el mecanismo central del historial de tarjetas.)*
+- [x] **SP1 - `sp_RegistrarSalida`** (`@id_item, @id_motivo, @destino, @retirado_por, @fecha_prevista`). Valida que el elemento exista, que **no tenga ya una salida abierta** y que **no esté en BAJA**; inserta la salida dentro de una transacción.
+- [x] **SP2 - `sp_RegistrarRetorno`** (`@id_salida, @id_ubicacion`). Valida que la salida esté abierta; setea `fecha_retorno`; reubica el elemento; registra el movimiento.
+- [x] **SP3 - `sp_CambiarEstado`** (`@id_item, @codigo_estado, @ot, @causas, @inspector`). En una transacción: desactiva la tarjeta activa e inserta la nueva. *(Es el mecanismo central del historial de tarjetas.)*
 - [ ] **SP4 - `sp_AltaElemento`** (`@NNE, @n_serie, @id_ubicacion, …`). Crea el ejemplar + su primera tarjeta `EN_SERVICIO` de una.
 
 `Otra: _______________________________________________`
@@ -160,8 +160,8 @@ justificación del dominio.
 ### P7. Funciones - ¿cuáles? (marcar varios)
 > **Tema de la materia:** Funciones escalares, funciones de fecha (DATEDIFF), subconsultas.
 
-- [ ] **F1 - `fn_DiasFueraDeposito(@id_item)`** → días que el elemento lleva afuera (de la salida abierta).
-- [ ] **F2 - `fn_EstadoActual(@id_item)`** → código del estado de la tarjeta activa.
+- [x] **F1 - `fn_DiasFueraDeposito(@id_item)`** → días que el elemento lleva afuera (de la salida abierta).
+- [x] **F2 - `fn_EstadoActual(@id_item)`** → código del estado de la tarjeta activa.
 - [ ] **F3 - `fn_DiasParaVencer(@id_item)`** → días hasta el vencimiento (negativo si ya venció).
 
 `Otra: _______________________________________________`
@@ -174,9 +174,9 @@ justificación del dominio.
 ### P8. Vistas - ¿cuáles? (marcar varios)
 > **Tema de la materia:** Vistas (tabla virtual), JOINs, abstracción de consultas complejas.
 
-- [ ] **V1 - `vw_elementos_afuera`** → elementos con salida abierta, con motivo, destino y días afuera.
-- [ ] **V2 - `vw_stock_disponible`** → elementos `EN_SERVICIO` y dentro del depósito.
-- [ ] **V3 - `vw_historial_tarjetas`** → todas las tarjetas de cada elemento, ordenadas por fecha.
+- [x] **V1 - `vw_elementos_afuera`** → elementos con salida abierta, con motivo, destino y días afuera.
+- [x] **V2 - `vw_stock_disponible`** → elementos `EN_SERVICIO` y dentro del depósito.
+- [x] **V3 - `vw_historial_tarjetas`** → todas las tarjetas de cada elemento, ordenadas por fecha.
 - [ ] **V4 - `vw_elementos_vencidos`** → elementos con `vencimiento` pasado.
 
 `Otra: _______________________________________________`
@@ -190,7 +190,7 @@ justificación del dominio.
 > **Tema de la materia:** Cursores (DECLARE/OPEN/FETCH/@@FETCH_STATUS/CLOSE/DEALLOCATE). *El integrador de la materia pide explícitamente “cursor para reporte de vencidos”.*
 
 - [ ] **C1 - Reporte de vencimientos.** Recorrer elementos cuyo `vencimiento` cae dentro de N días y armar un listado de alertas.
-- [ ] **C2 - Salidas vencidas.** Recorrer salidas con `fecha_prevista_retorno` pasada y sin retorno, y generar el listado de “préstamos/reparaciones atrasados”.
+- [x] **C2 - Salidas vencidas.** Recorrer salidas con `fecha_prevista_retorno` pasada y sin retorno, y generar el listado de “préstamos/reparaciones atrasados”.
 - [ ] **C3 - Los dos** (un cursor cada uno).
 - [ ] **C4 - Sin cursor** (no lo incluimos).
 
@@ -205,7 +205,7 @@ justificación del dominio.
 > **Tema de la materia:** Esquemas (organización lógica) y sinónimos.
 
 - [ ] **A.** Organizar las tablas en esquemas (ej.: `Inventario`, `Movimientos`, `Auditoria`) y crear algún sinónimo. *(Muestra prolijidad “profesional”.)*
-- [ ] **B.** Dejar todo en `dbo` (un solo esquema). Más simple, menos para explicar.
+- [x] **B.** Dejar todo en `dbo` (un solo esquema). Más simple, menos para explicar.
 
 `Otra: _______________________________________________`
 
@@ -219,7 +219,7 @@ justificación del dominio.
 ### P11. Datos de ejemplo + consultas de demostración
 > **Tema de la materia:** SQL avanzado (UNION/INTERSECT/EXCEPT, GROUP BY/HAVING, EXISTS/NOT EXISTS, subconsultas).
 
-- [ ] **A.** Sí: cargar datos de prueba realistas y un set de consultas demo que muestren **set operations, GROUP BY/HAVING y EXISTS/NOT EXISTS** (ej.: “elementos que nunca salieron del depósito”, “cuántos elementos por estado”, “ubicaciones con más de N elementos”).
+- [x] **A.** Sí: cargar datos de prueba realistas y un set de consultas demo que muestren **set operations, GROUP BY/HAVING y EXISTS/NOT EXISTS** (ej.: “elementos que nunca salieron del depósito”, “cuántos elementos por estado”, “ubicaciones con más de N elementos”).
 - [ ] **B.** Solo datos de prueba, sin consultas demo.
 - [ ] **C.** Nada de esto.
 
@@ -233,7 +233,7 @@ justificación del dominio.
 ### P12. Documento de normalización (dependencias funcionales + 1FN/2FN/3FN)
 > **Tema de la materia:** Normalización, dependencias funcionales (parciales y transitivas).
 
-- [ ] **A.** Sí: un doc corto que liste las dependencias funcionales y argumente que cada tabla está en **3FN** (con `material_sist_armas` como ejemplo de clave compuesta sin dependencia parcial, y `ubicacion` separada como ejemplo de evitar dependencia transitiva).
+- [x] **A.** Sí: un doc corto que liste las dependencias funcionales y argumente que cada tabla está en **3FN** (con `material_sist_armas` como ejemplo de clave compuesta sin dependencia parcial, y `ubicacion` separada como ejemplo de evitar dependencia transitiva).
 - [ ] **B.** No, lo explicamos de palabra en la defensa.
 
 `Otra: _______________________________________________`
@@ -246,7 +246,7 @@ justificación del dominio.
 ### P13. Políticas de borrado (FK) y validaciones CHECK
 > **Tema de la materia:** Restricciones (CHECK), políticas en FK (NO ACTION / CASCADE / SET NULL / SET DEFAULT).
 
-- [ ] **A.** Definir políticas explícitas en las FK (ej.: borrar una ubicación → `SET NULL` en elementos; impedir borrar un catálogo con ejemplares → `NO ACTION`) **y** agregar CHECKs (ej.: `fecha_retorno >= fecha_salida`, `fecha_prevista_retorno >= fecha_salida`).
+- [x] **A.** Definir políticas explícitas en las FK (ej.: borrar una ubicación → `SET NULL` en elementos; impedir borrar un catálogo con ejemplares → `NO ACTION`) **y** agregar CHECKs (ej.: `fecha_retorno >= fecha_salida`, `fecha_prevista_retorno >= fecha_salida`).
 - [ ] **B.** Solo los CHECKs, dejar las FK en su comportamiento por defecto.
 - [ ] **C.** Dejar todo como está.
 
@@ -264,8 +264,8 @@ justificación del dominio.
 > (cantidad mínima de triggers/SP, formato de entrega, restricciones)? Escríbanlo:
 
 ```
-(espacio para el equipo)
 
+NO
 
 
 ```
